@@ -2,24 +2,55 @@ name: Android APK (Capacitor)
 on:
   push: { branches: [ main, master ] }
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 18, cache: 'npm' }
-      - run: npm ci
-      - run: npm run build
-      - uses: android-actions/setup-android@v3
-      - run: |
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web (Vite)
+        run: npm run build
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Ensure SDK components
+        run: |
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          sdkmanager --licenses <<< 'y'
-      - run: npx cap add android || echo 'android already added'
-      - run: npx cap sync android
-      - working-directory: android
+          yes | sdkmanager --licenses
+
+      - name: Add Android platform (Capacitor)
+        run: npx cap add android || echo 'android already added'
+
+      - name: Sync web assets to Android
+        run: npx cap sync android
+
+      - name: Make Gradle executable
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK
+        working-directory: android
         run: ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: gastos-app-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
