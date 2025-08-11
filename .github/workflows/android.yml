@@ -13,8 +13,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'npm'
+          node-version: 18   # sin cache para evitar error por falta de package-lock
 
       - name: Install dependencies
         run: npm install
@@ -25,7 +24,7 @@ jobs:
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Setup Android SDK
@@ -43,7 +42,7 @@ jobs:
         run: npx cap sync android
 
       - name: Make Gradle executable
-        run: chmod +x android/gradlew
+        run: chmod +x android/gradlew || true
 
       - name: Build Debug APK
         working-directory: android
